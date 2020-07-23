@@ -1,0 +1,67 @@
+.switch {
+    position: relative;
+    width: 5.6rem;
+    height: 2.6rem;
+    display: inline-block;
+    cursor: pointer;
+    background-color: white;
+}
+
+.slider {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    border: 0.1rem solid black;
+    border-radius: 3.4rem;
+}
+
+.slider::before {
+    content: '';
+    position: absolute;
+    top: 0.35rem;
+    left: 0.4rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    transition: transform 400ms;
+    background-color: black;
+}
+
+.isOn,
+.isOff {
+    flex: 1;
+    opacity: 0;
+    color: black;
+    text-transform: lowercase;
+    transition: opacity 400ms;
+}
+
+.isOn {
+    text-align: right;
+}
+
+.isOff {
+    opacity: 1;
+    text-align: left;
+}
+
+.checkbox {
+    position: absolute;
+    width: 0.1rem;
+    height: 0.1rem;
+    overflow: hidden;
+    clip: rect(0.1rem, 0.1rem, 0.1rem, 0.1rem);
+
+    &:checked + .slider::before {
+        transform: translateX(3rem);
+    }
+
+    &:checked + .slider .isOn {
+        opacity: 1;
+    }
+
+    &:checked + .slider .isOff {
+        opacity: 0;
+    }
+}

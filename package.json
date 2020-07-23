@@ -1,0 +1,21 @@
+{
+  "name": "rtl-presentation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "mdx-deck deck.mdx"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "code-surfer": "^3.1.1",
+    "mdx-deck": "^4.1.1",
+    "mdx-deck-live-code": "^1.0.1"
+  },
+  "dependencies": {
+    "@emotion/core": "^10.0.28",
+    "classnames": "^2.2.6"
+  }
+}

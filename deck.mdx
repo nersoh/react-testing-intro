@@ -1,0 +1,908 @@
+import { future, highlight } from '@mdx-deck/themes'
+import { Box, Link, Grid } from 'theme-ui'
+import { Split } from 'mdx-deck'
+import { CodeSurfer, CodeSurferColumns, Step } from "code-surfer"
+import { dracula as draculaTheme } from "@code-surfer/themes"
+
+export const theme = {
+  ...future,
+  ...highlight
+}
+
+# React Testing Library
+
+----
+
+#### What we will cover today
+
+<Steps>
+
+1. What RTL is
+2. API
+    - Querying
+    - Debug
+    - Firing Events
+    - Rerender
+    - Configuration
+3. Principles
+4. Q & A
+
+</Steps>
+
+----
+import logo from './images/rtl.jpg'
+
+<Split>
+
+<img src={logo} />
+
+## What is React Testing  Library?
+> *“The React Testing Library is a very light-weight solution for testing React components.
+It provides light utility functions on top of react-dom and react-dom/test-utils, in a way that encourages better testing practices.”*
+<small>
+    <Link color='primary' href='https://testing-library.com/docs/react-testing-library/intro'>React Testing Library docs</Link>
+</small>
+
+</Split>
+
+----
+
+## Motivation
+
+----
+
+> We intend that our tests behave the way our users see the application through their navigation.
+And React Testing  Library is the closest we can be, using unit tests, to automate the testing process.
+Although Enzyme testing logic looks good on a first overview,
+there can be side effects that we can’t catch with unit tests since we are testing the expected result of our features’ properties and not the way users will see the the feature. 
+
+----
+    
+## What React Testing Library does different from Enzyme
+
+----
+
+> The main concept around React Testing Library is to have tests that resemble how your application is going to function in the real world. So instead of dealing with a component instance and all its implementation details, RTL works with actual DOM nodes as a result of a component being rendered.
+
+> Basically, your tests will be based on testing the output (DOM rendered and side effects) of component given an input.
+
+----
+## POV - Enzyme vs React Testing  Library
+
+On the event of going to a bar:
+	
+>- **Enzyme** cares if there is an empty seat, if we are updating our free seat number, if my state.beers is being well set, if component Beer is in our mount/shallow.
+
+>- **React Testing Library** wants to know if there is an empty seat, what I will get if I ask for 3 beers, what will be said if I ask more than the stock limit.
+
+----
+import toggle from './images/toggle.png'
+
+## Switching between Enzyme and React Testing  Library
+
+> Here’s an example of a Toggle component that is built on top of an input checkbox to work as kind of “switch”.
+
+import Toggle from './components/toggle'
+
+<Box p={10} bg="white">
+<Toggle />
+</Box>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```js 6:7 title="Toggle component"
+function Toggle({ isChecked, on, off, onChange, theme, ...otherProps }) {
+    return (
+        <label className={Styles.switch} {...otherProps}>
+            <input
+                checked={isChecked}
+                className={Styles.checkbox}
+                type="checkbox"
+                onChange={onChange}
+            />
+            <div className={Styles.slider}>
+                <span className={Styles.isOn}>{on}</span>
+                <span className={Styles.isOff}>{off}</span>
+            </div>
+        </label>
+    );
+}
+```
+
+</CodeSurfer>
+
+----
+<CodeSurfer theme={draculaTheme}>
+
+```jsx showNumbers title="Enzyme" subtitle="Here, there is a wrapper that makes possible to access any internal detail of a component including state, props, methods etc."
+    import { shallow } from 'enzyme';
+
+    it('should render correctly when has default checked true', () => {
+        const wrapper = shallow(<Toggle {...mockProps} isChecked />);
+
+        expect(wrapper.find('.checkbox').props().checked).toBe(true);
+    });
+
+    it('should accept a onChange that returns the value', () => {
+        const event = {
+            target: { checked: true },
+        };
+        const wrapper = shallow(<Toggle {...mockProps} />);
+
+        wrapper.find('input').simulate('change', event);
+
+        expect(mockProps.onChange).toHaveBeenCalledTimes(1);
+        expect(mockProps.onChange).toBeCalledWith(event);
+    });
+```
+
+</CodeSurfer>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx showNumbers title="React Testing Library" subtitle="In this case, there is a render that provide utility methods to find elements and perform actions against a rendered DOM, then preventing us from accessing to internal details of the component."
+    import { render, screen, fireEvent } from '@testing-library/react';
+
+    it('should be OFF by default', () => {
+        render(<Toggle {...mockProps} />);
+
+        expect(screen.getByRole('checkbox')).toBeChecked();
+    });
+
+    it('should turn ON', () => {
+        render(<Toggle {...mockProps} />);
+
+        const checkbox = screen.getByRole('checkbox');
+
+        expect(checkbox).not.toBeChecked();
+
+        fireEvent.click(checkbox);
+
+        expect(checkbox).toBeChecked();
+        expect(mockProps.onChange).toHaveBeenCalledTimes(1);
+    });
+
+```
+
+</CodeSurfer>
+
+<Notes>
+
+First, we have a few test cases implemented with Enzyme.
+
+In this case, there is a wrapper that makes possible to access any internal detail of a component including state, props, methods etc.
+
+</Notes>
+
+----
+
+## Mindset upon writing a test
+
+----
+import itemsImage from './images/items1.png'
+import itemsImage2 from './images/items2.png'
+
+**Let's take a product list as example**: If we click on add to wishlist button,
+We don’t want to know if addToWishlist redux action was dispatched,
+We want to know if the star turned gold and the product is now in wishlist
+Our unit tests should be our go-to documentation
+
+<Split>
+
+<Box p={2}>
+    <picture>
+        <img src={itemsImage} />
+        <figcaption>Should see 6 products and arrows (condition: have more than 6 products)</figcaption>
+    </picture>
+</Box>
+
+<Box p={2}>
+    <picture>
+        <img src={itemsImage2} />
+        <figcaption>Should see 3 products (condition: have 3 products)</figcaption>
+    </picture>
+
+</Box>
+
+</Split>
+
+----
+
+## API
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Syntax"
+import { render, screen } from '@testing-library/react';
+
+it('should render apple pay button', async () => {
+    render(<ApplePayButtonManager {...props} />);
+
+    const applePayButton = await screen.findByTestId('applePayButton');
+
+    expect(applePayButton).toBeInTheDocument();
+});
+```
+
+</CodeSurfer>
+
+----
+## Querying
+----
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Check if Summary component has a title"
+it('should render summary title', () => {
+    const { queryByText } = render(<Summary {...props} />);
+
+    expect(queryByText(/Summary/)).not.toBeNull();
+});
+```
+
+</CodeSurfer>
+
+<Notes>
+
+render renders a component into the DOM and provides a set of utilities.
+
+queryByText is one of the utilities provided by render method that selects the first DOM node containing a specific text. 
+
+> We’ll see later that there is a recommended way to access methods like this one through an object called screen.
+
+</Notes>
+
+----
+
+##### getBy\*/getAll\*
+Return node(s) matching a query or throw an error otherwise.
+
+##### queryBy\*/queryAllBy\*
+Return node(s) matching a query or null in case of no matching.
+
+##### findBy\*/findAllBy\*
+Return a Promise resolving when element is found or rejecting when no element is found.
+
+
+----
+
+import curlyBrace from './images/curlybrace.png'
+
+# Variants
+
+<Grid gap={2} columns="2fr 1fr 2fr" css={{ alignItems: 'center', justifyItems: 'center' }}>
+
+<Box>
+
+- getBy\*/getAllBy\*
+- queryBy\*/queryAllBy\*
+- findBy\*/findAllBy\*
+
+</Box>
+
+<Box css={{ fontSize: '5rem' }}>
+
+# }
+
+</Box>
+
+<Box>
+
+- AltText
+- LabelText
+- Role
+- Text
+- TestId
+- Title
+and more...
+
+
+</Box>
+
+</Grid>
+
+----
+
+import thinking from './images/thinking.png'
+
+## When should I use getBy or queryBy?
+
+<img src={thinking} style={ { objectFit: 'contain', width: 'auto', maxWidth: '500px' }}/>
+
+----
+
+> According to the React Testing Library guidelines, **queryBy** should be used for non-existence test cases. In other words, when testing if an element does not exist, otherwise stick with **getBy**.
+
+----
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="getBy vs queryBy"
+expect(getByText(/Farfetch/)).toBeInTheDocument()
+expect(queryByText(/Lionesa/)).not.toBeInTheDocument()
+```
+
+</CodeSurfer>
+
+-----
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Can you identify what’s wrong with the following code?"
+it('should show content in a "tooltip" after a click event', () => {
+    const { getByTestId, queryByTestId } = render(<Tooltip><div>content</div></Tooltip>);
+        
+    const tooltipContent = queryByTestId('tooltip-content');
+
+    expect(tooltipContent).toBeNull();
+
+    fireEvent.click(getByTestId('tooltip'));
+        
+    expect(tooltipContent).toBeDefined();
+});
+
+```
+
+```jsx 4:5 title="Can you identify what’s wrong with the following code?"
+it('should show content in a "tooltip" after a click event', () => {
+    const { getByTestId, queryByTestId } = render(<Tooltip><div>content</div></Tooltip>);
+    
+    // queryBy* always returns a “defined” object, either a DOM node or null
+    const tooltipContent = queryByTestId('tooltip-content');
+
+    expect(tooltipContent).toBeNull();
+
+    fireEvent.click(getByTestId('tooltip'));
+        
+    expect(tooltipContent).toBeDefined();
+});
+
+```
+
+```jsx 6 title="Can you identify what’s wrong with the following code?"
+it('should show content in a "tooltip" after a click event', () => {
+    const { getByTestId, queryByTestId } = render(<Tooltip><div>content</div></Tooltip>);
+        
+    const tooltipContent = queryByTestId('tooltip-content');
+
+    expect(tooltipContent).toBeNull();
+
+    fireEvent.click(getByTestId('tooltip'));
+        
+    expect(tooltipContent).toBeDefined();
+});
+
+```
+
+```jsx 10:11 title="Can you identify what’s wrong with the following code?"
+it('should show content in a "tooltip" after a click event', () => {
+    const { getByTestId, queryByTestId } = render(<Tooltip><div>content</div></Tooltip>);
+        
+    const tooltipContent = queryByTestId('tooltip-content');
+
+    expect(tooltipContent).toBeNull();
+
+    fireEvent.click(getByTestId('tooltip'));
+    
+    // tooltipContent holds a “null” value, which does not update regardless of clicking.
+    expect(tooltipContent).toBeDefined();
+});
+
+```
+
+</CodeSurfer>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Possible solution"
+import { render, screen } from '@testing-library/react';
+
+it('should show content in a "tooltip" after a click event', () => {
+    render(<Tooltip><div>content</div></Tooltip>);
+});
+
+
+```
+
+```jsx 6 title="Possible solution"
+import { render, screen } from '@testing-library/react';
+
+it('should show content in a "tooltip" after a click event', () => {
+    render(<Tooltip><div>content</div></Tooltip>);
+
+    expect(screen.getByTestId('tooltip-content')).not.toBeInTheDocument();
+});
+
+
+```
+
+```jsx 8 title="Possible solution"
+import { render, screen } from '@testing-library/react';
+
+it('should show content in a "tooltip" after a click event', () => {
+    render(<Tooltip><div>content</div></Tooltip>);
+
+    expect(screen.getByTestId('tooltip-content')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('tooltip'));
+});
+
+
+```
+
+```jsx 10 title="Possible solution"
+import { render, screen } from '@testing-library/react';
+
+it('should show content in a "tooltip" after a click event', () => {
+    render(<Tooltip><div>content</div></Tooltip>);
+
+    expect(screen.getByTestId('tooltip-content')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('tooltip'));
+        
+    expect(screen.getByTestId('tooltip-content')).toBeInTheDocument();
+});
+
+
+```
+
+```jsx title="Possible solution"
+import { render, screen } from '@testing-library/react';
+
+it('should show content in a "tooltip" after a click event', () => {
+    render(<Tooltip><div>content</div></Tooltip>);
+
+    expect(screen.getByTestId('tooltip-content')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('tooltip'));
+        
+    expect(screen.getByTestId('tooltip-content')).toBeInTheDocument();
+});
+
+
+```
+
+</CodeSurfer>
+
+----
+
+## jest-dom
+
+What about we have more readable matchers with better error messages? 
+
+<center>
+
+That’s exactly what jest-dom provides, matchers including toBeDisabled, toBeInTheDocument, toHaveClass etc.
+
+*expect(screen.getByRole('button')).toBeDisabled()*
+*expect(screen.getByRole('checkbox')).toBeChecked()*
+
+</center>
+
+<Link color='primary' href='https://github.com/testing-library/jest-dom'>https://github.com/testing-library/jest-dom</Link>
+
+----
+## Custom queries
+
+----
+
+> Even though custom queries should not be created often, there might be cases they are a good/only fit.
+
+> Let’s imagine you want to get a list of elements rendered by a component, but since it’s a messy legacy code, some elements are completely different from each other (tagName, testid, role etc.). Fortunately, they have a data attribute in common “data-component-type”, which is applied throughout the whole application, so we can create custom queries for it.
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx showNumbers title="custom-queries.js"
+    import { queryHelpers, buildQueries } from '@testing-library/react'
+
+    const queryAllByComponentType = (...args) => queryHelpers.queryAllByAttribute('data-component-type', ...args)
+    const queryByComponentType = (...args) => queryHelpers.queryByAttribute('data-component-type', ...args)
+
+    exports {
+        queryAllByComponentType, queryByComponentType
+    } = buildQueries(queryAllByComponentType, queryByComponentType)
+
+```
+
+</CodeSurfer>
+
+----
+## screen
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Destructing methods from render is often tedious, that’s why screen comes up as a really handy alternative"
+    import { screen } from '@testing-library/react'
+
+    screen.getByText('I am here')
+
+```
+
+</CodeSurfer>
+
+----
+## debug
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx 6 title="screen also exposes a debug method that is meant to show the DOM tree."
+    import { render, screen } from '@testing-library/react';
+
+    it('should render title', () => {
+        render(<Summary {...props} />);
+
+        screen.debug();
+        expect(screen.getByText(props.title)).toBeDefined();
+    });
+
+```
+
+</CodeSurfer>
+
+----
+
+import debug from './images/debug.png'
+
+## debug output
+
+<img src={debug} style={{ maxHeight: '500px' }} />
+
+----
+
+## Firing Events
+
+----
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="fireEvent" subtitle="When it comes to fire any event such as click, change, keyDown, fireEvent is the method responsible to trigger them"
+    import { fireEvent } from '@testing-library/react';
+
+    fireEvent.change(getByLabelText(/email/), { target: { value: 'presentation@rtl.com' } })
+    fireEvent.click(getByLabelText(“submit”))
+    fireEvent.keyDown(getByTestId(“editableArea”), { key: 'Enter', code: 13 })
+```
+</CodeSurfer>
+
+----
+
+## Async actions
+
+-----
+
+<center>
+
+In cases when asynchronous code has to performed (e.g API calls), we have to wait until an expected element is in place before asserting against it, and here’s where **waitFor** and **waitForElementToBeRemoved** utils come to play.
+
+</center>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx 2:3,7:8 title="Async utilities"
+
+// waitFor
+await waitFor(() => expect(queryAllByTestId('todo')).toHaveLength(1));
+
+fireEvent.click(getByText(/submit/));
+
+// waitForElementToBeRemoved
+await waitForElementToBeRemoved(queryByText(/sending.../i));
+
+```
+
+</CodeSurfer>
+
+----
+
+import CounterButton from './components/CounterButton'
+
+> Let’s take a component called **ClickCounter** that counts the number of clicks performed on itself.
+
+<CounterButton />
+
+----
+
+How would be a test case for ClickCounter component?
+
+<iframe
+    src="https://codesandbox.io/embed/react-testing-clickcounter-0w77c?fontsize=14&hidenavigation=1&previewwindow=tests&theme=dark"
+    style={{ width: '100%', height: '500px', border: 0, borderRadius: '4px', overflow: 'hidden' }}
+    title="react-testing - ClickCounter"
+    allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+    sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+></iframe>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Testing <ClickCounter />"
+    it("should increment number of clicks", () => {
+        render(<ClickCounter />);
+        
+        const clickCounter = screen.getByRole("button", { name: "Clicks: 0" });
+
+        expect(clickCounter).toHaveTextContent("Clicks: 0");
+
+        fireEvent.click(clickCounter);
+
+        expect(clickCounter).toHaveTextContent("Clicks: 1");
+    });
+
+```
+
+```jsx 2 title="Testing <ClickCounter />"
+    it("should increment number of clicks", () => {
+        render(<ClickCounter />);
+        
+        const clickCounter = screen.getByRole("button", { name: "Clicks: 0" });
+
+        expect(clickCounter).toHaveTextContent("Clicks: 0");
+
+        fireEvent.click(clickCounter);
+
+        expect(clickCounter).toHaveTextContent("Clicks: 1");
+    });
+
+```
+
+```jsx 4 title="Testing <ClickCounter />"
+    it("should increment number of clicks", () => {
+        render(<ClickCounter />);
+        
+        const clickCounter = screen.getByRole("button", { name: "Clicks: 0" });
+
+        expect(clickCounter).toHaveTextContent("Clicks: 0");
+
+        fireEvent.click(clickCounter);
+
+        expect(clickCounter).toHaveTextContent("Clicks: 1");
+    });
+
+```
+
+```jsx 6 title="Testing <ClickCounter />"
+    it("should increment number of clicks", () => {
+        render(<ClickCounter />);
+        
+        const clickCounter = screen.getByRole("button", { name: "Clicks: 0" });
+
+        expect(clickCounter).toHaveTextContent("Clicks: 0");
+
+        fireEvent.click(clickCounter);
+
+        expect(clickCounter).toHaveTextContent("Clicks: 1");
+    });
+```
+
+```jsx 8 title="Testing <ClickCounter />"
+    it("should increment number of clicks", () => {
+        render(<ClickCounter />);
+        
+        const clickCounter = screen.getByRole("button", { name: "Clicks: 0" });
+
+        expect(clickCounter).toHaveTextContent("Clicks: 0");
+
+        fireEvent.click(clickCounter);
+
+        expect(clickCounter).toHaveTextContent("Clicks: 1");
+    });
+```
+
+```jsx 10 title="Testing <ClickCounter />"
+    it("should increment number of clicks", () => {
+        render(<ClickCounter />);
+        
+        const clickCounter = screen.getByRole("button", { name: "Clicks: 0" });
+
+        expect(clickCounter).toHaveTextContent("Clicks: 0");
+
+        fireEvent.click(clickCounter);
+
+        expect(clickCounter).toHaveTextContent("Clicks: 1");
+    });
+```
+
+</CodeSurfer>
+
+----
+
+## user-event
+
+----
+
+> When it comes to fire events, the more we simulate the real user action, the better.
+Having this in mind, **user-event** brings to us an API to help simulating the user interactions as much close to real as possible.
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Performing a double click on a checkbox element"
+import userEvent from '@testing-library/user-events
+
+const checkbox = screen.getByTestId('checkbox')
+
+userEvent.dblClick(checkbox)
+
+expect(checkbox).toHaveProperty('checked', false)
+
+```
+
+</CodeSurfer>
+
+----
+
+## Rerender
+
+----
+
+> Provided by render, rerender is meant to re-render the component by passing new props.
+Since it uses the same DOM node, some React lifecycle methods are triggered as a result (e.g. _componentDidUpdate_)
+
+----
+
+### Example
+
+> Given a simple counter component that show a count value based on its props, check if onUpdate function is called when count value changes.
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Counter.js"
+const Counter = ({ onUpdate, count }) => {
+    useEffect(() => {
+        onUpdate();
+    }, [count, onUpdate]);
+
+    return <span>{count}</span>;
+};
+
+```
+
+</CodeSurfer>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title=" Testing <Counter />"
+describe("Counter", () => {
+    it("should call onUpdate when count changes", () => {
+        const onUpdate = jest.fn();
+        const { getByText, rerender } = render(
+            <Counter onUpdate={onUpdate} count={1} />
+        );
+
+        rerender(<Counter onUpdate={onUpdate} count={2} />);
+
+        expect(getByText("2")).toBeDefined();
+        expect(onUpdate).toHaveBeenCalledTimes(2);
+    });
+});
+
+
+```
+
+</CodeSurfer>
+
+----
+
+## Custom renders
+
+----
+
+> It’s very common React applications implementing some kind of global data like React Context, Redux etc.
+Because of that, it might be useful to create a custom render to include all global data required by the component being tested instead of setting the global data many times.
+
+
+----
+
+### Example
+
+> Take an application that have many providers, which are required by some components.
+So in order to avoid wrapping up components with providers, the following utilities could be applied.
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="test-utils.js"
+const AllTheProviders = ({ children }) => {
+  return (
+    <ThemeProvider theme="light">
+      <TranslationProvider messages={defaultStrings}>
+        {children}
+      </TranslationProvider>
+    </ThemeProvider>
+  )
+}
+
+const customRender = (ui, options) =>
+    render(ui, { wrapper: AllTheProviders, ...options })
+
+// re-export everything
+export * from '@testing-library/react'
+
+// override render method
+export { customRender as render }
+
+```
+
+</CodeSurfer>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="Usage"
+import { render } from './test-utils';
+
+```
+
+</CodeSurfer>
+
+----
+
+## Configuration
+
+----
+
+> RTL, by default, takes “data-testid” as the identification attribute for “getByTestId”, but there are times that this attribute name does not fit our app either because it is a legacy code using a different test id throughout all files or just a matter of taste. For these cases, a configuration file can be set as a solution.
+
+> Configs should be placed in jest.config.js file, there you can include setupFilesAfterEnv to have the setup script you need for your project.
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx title="config.js"
+
+import { configure } from '@testing-library/react'
+
+configure({ testIdAttribute: 'data-my-test-id' })
+
+```
+
+</CodeSurfer>
+
+----
+
+## Principles
+
+----
+
+> - Test the output of a component given an input.
+- Drive our tests towards a11y.
+- Forget about implementation details (internal code does not matter).
+- Focus on What instead of How.
+- The main goal is CONFIDENCE your tests can give you and how much you will trust them to cover your back.
+
+----
+
+# Q & A
+
+----
+## References
+
+<Link color="primary" href="https://testing-library.com/docs/react-testing-library/intro">https://testing-library.com/docs/react-testing-library/intro</Link>
+<Link color="primary" href="https://kentcdodds.com/blog/">https://kentcdodds.com/blog/</Link>
+<Link color="primary" href="https://github.com/testing-library/jest-dom">https://github.com/testing-library/jest-dom</Link>
+<Link color="primary" href="https://github.com/testing-library/user-event">https://github.com/testing-library/user-event</Link>
+
+-----
+
+# Thank you
+...and let’s write tests.
+
