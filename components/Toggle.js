@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import Styles from './Toggle.css';
-import cx from 'classnames';
+import './Styles.css';
 /** @jsx jsx */
 import { css, jsx } from '@emotion/core'
 
