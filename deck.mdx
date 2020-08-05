@@ -22,6 +22,7 @@ export const theme = {
 1. What React Testing Library is
 2. API (Querying, Firing Events, Configuration etc)
 3. Additional packages, extensions etc.
+4. Differences comparing to Enzyme 
 4. Principles
 5. Q & A
 
@@ -49,130 +50,11 @@ It provides light utility functions on top of react-dom and react-dom/test-utils
 
 ----
 
-> We intend that our tests behave the way our users see the application through their navigation.
-And React Testing  Library is the closest we can be, using unit tests, to automate the testing process.
-Although Enzyme testing logic looks good on a first overview,
-there can be side effects that we can’t catch with unit tests since we are testing the expected result of our features’ properties and not the way users will see the the feature. 
+> When testing our application, the closer we get to the behavior users have when using the application,
+the more confidence we get the application will work as expected.
 
-----
-    
-## What React Testing Library does different from Enzyme
-
-----
-
-> The main concept around React Testing Library is to have tests that resemble how your application is going to function in the real world. So instead of dealing with a component instance and all its implementation details, RTL works with actual DOM nodes as a result of a component being rendered.
-
-> Basically, your tests will be based on testing the output (DOM rendered and side effects) of component given an input.
-
-----
-## POV - Enzyme vs React Testing  Library
-
-On the event of going to a bar:
-	
->- **Enzyme** cares if there is an empty seat, if we are updating our free seat number, if my state.beers is being well set, if component Beer is in our mount/shallow.
-
->- **React Testing Library** wants to know if there is an empty seat, what I will get if I ask for 3 beers, what will be said if I ask more than the stock limit.
-
-----
-
-## Switching between Enzyme and React Testing  Library
-
-> Here’s an example of a Toggle component that is built on top of an input checkbox to work as kind of “switch”.
-
-
-<Box p={10} bg="white">
-    <Toggle />
-</Box>
-
-----
-
-<CodeSurfer theme={draculaTheme}>
-
-```js 6:7 title="Toggle component"
-function Toggle({ isChecked, on, off, onChange, theme, ...otherProps }) {
-    return (
-        <label className={Styles.switch} {...otherProps}>
-            <input
-                checked={isChecked}
-                className={Styles.checkbox}
-                type="checkbox"
-                onChange={onChange}
-            />
-            <div className={Styles.slider}>
-                <span className={Styles.isOn}>{on}</span>
-                <span className={Styles.isOff}>{off}</span>
-            </div>
-        </label>
-    );
-}
-```
-
-</CodeSurfer>
-
-----
-<CodeSurfer theme={draculaTheme}>
-
-```jsx showNumbers title="Enzyme" subtitle="Here, there is a wrapper that makes possible to access any internal detail of a component including state, props, methods etc."
-    import { shallow } from 'enzyme';
-
-    it('should render correctly when has default checked true', () => {
-        const wrapper = shallow(<Toggle {...mockProps} isChecked />);
-
-        expect(wrapper.find('.checkbox').props().checked).toBe(true);
-    });
-
-    it('should accept a onChange that returns the value', () => {
-        const event = {
-            target: { checked: true },
-        };
-        const wrapper = shallow(<Toggle {...mockProps} />);
-
-        wrapper.find('input').simulate('change', event);
-
-        expect(mockProps.onChange).toHaveBeenCalledTimes(1);
-        expect(mockProps.onChange).toBeCalledWith(event);
-    });
-```
-
-</CodeSurfer>
-
-----
-
-<CodeSurfer theme={draculaTheme}>
-
-```jsx showNumbers title="React Testing Library" subtitle="In this case, there is a render that provide utility methods to find elements and perform actions against a rendered DOM, then preventing us from accessing to internal details of the component."
-    import { render, screen, fireEvent } from '@testing-library/react';
-
-    it('should be OFF by default', () => {
-        render(<Toggle {...mockProps} />);
-
-        expect(screen.getByRole('checkbox')).toBeChecked();
-    });
-
-    it('should turn ON', () => {
-        render(<Toggle {...mockProps} />);
-
-        const checkbox = screen.getByRole('checkbox');
-
-        expect(checkbox).not.toBeChecked();
-
-        fireEvent.click(checkbox);
-
-        expect(checkbox).toBeChecked();
-        expect(mockProps.onChange).toHaveBeenCalledTimes(1);
-    });
-
-```
-
-</CodeSurfer>
-
-<Notes>
-
-First, we have a few test cases implemented with Enzyme.
-
-In this case, there is a wrapper that makes possible to access any internal detail of a component including state, props, methods etc.
-
-</Notes>
+> In order to achieve that, **React Testing Library** brings an different approach of testing based on *rendered* components (DOM representation)
+ instead of component instances/objects as we usually see in **Enzyme**, for example.
 
 ----
 
@@ -182,7 +64,7 @@ In this case, there is a wrapper that makes possible to access any internal deta
 
 > **Let's take a product list as example**:
 If we click to add a product to a wishlist,
-we don’t want to know if addToWishlist redux action was dispatched or an internal state variable changed. Instead, 
+we don’t want to know if *addToWishlist* redux action was dispatched or an internal state variable changed. Instead, 
 we could check if the star got highlighted and a call, to the endpoint that adds the product to wishlist, was made.
 Our unit tests should be our go-to documentation
 
@@ -212,7 +94,7 @@ it('should render apple pay button', async () => {
 
 </CodeSurfer>
 
-----
+-----
 ## Querying
 ----
 <CodeSurfer theme={draculaTheme}>
@@ -499,7 +381,7 @@ That’s exactly what jest-dom provides, matchers including toBeDisabled, toBeIn
 
 <CodeSurfer theme={draculaTheme}>
 
-```jsx title="Destructing methods from render is often tedious, that’s why screen comes up as a really handy alternative"
+```jsx title="Getting methods from render() is often tedious, that’s why 'screen' comes up as a really handy alternative"
     import { screen } from '@testing-library/react'
 
     screen.getByText('I am here')
@@ -514,7 +396,7 @@ That’s exactly what jest-dom provides, matchers including toBeDisabled, toBeIn
 
 <CodeSurfer theme={draculaTheme}>
 
-```jsx 6 title="screen also exposes a debug method that is meant to show the DOM tree."
+```jsx 6 title="'screen' also exposes a debug method that is meant to show the DOM tree."
     import { render, screen } from '@testing-library/react';
 
     it('should render title', () => {
@@ -543,7 +425,7 @@ import debug from './images/debug.png'
 ----
 <CodeSurfer theme={draculaTheme}>
 
-```jsx title="fireEvent" subtitle="When it comes to fire any event such as click, change, keyDown, fireEvent is the method responsible to trigger them"
+```jsx title="fireEvent" subtitle="In order to fire DOM events such as click, change, keyDown, 'fireEvent' provides utils to trigger them"
     import { fireEvent } from '@testing-library/react';
 
     fireEvent.change(getByLabelText(/email/), { target: { value: 'presentation@rtl.com' } })
@@ -798,6 +680,126 @@ import testingPlaygroundImage from './images/testing_playground.png'
 
 There is out there a really good Chrome extension called Testing Playground that allows you
 to inspect elements on the page suggesting the best queries using React Testing Library.
+
+</Notes>
+
+----
+    
+## What React Testing Library does different from Enzyme
+
+----
+
+> The main concept around React Testing Library is to have tests that resemble how your application is going to function in the real world. So instead of dealing with a component instance and all its implementation details, RTL works with actual DOM nodes as a result of a component being rendered.
+
+> Basically, your tests will be based on testing the output (DOM rendered and side effects) of component given an input.
+
+----
+## POV - Enzyme vs React Testing  Library
+
+On the event of going to a bar:
+	
+>- **Enzyme** cares if there is an empty seat, if we are updating our free seat number, if my state.beers is being well set, if component Beer is in our mount/shallow.
+
+>- **React Testing Library** wants to know if there is an empty seat, what I will get if I ask for 3 beers, what will be said if I ask more than the stock limit.
+
+----
+
+## Switching between Enzyme and React Testing  Library
+
+> Here’s an example of a Toggle component that is built on top of an input checkbox to work as kind of “switch”.
+
+
+<Box p={10} bg="white">
+    <Toggle />
+</Box>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```js 6:7 title="Toggle component"
+function Toggle({ isChecked, on, off, onChange, theme, ...otherProps }) {
+    return (
+        <label className={Styles.switch} {...otherProps}>
+            <input
+                checked={isChecked}
+                className={Styles.checkbox}
+                type="checkbox"
+                onChange={onChange}
+            />
+            <div className={Styles.slider}>
+                <span className={Styles.isOn}>{on}</span>
+                <span className={Styles.isOff}>{off}</span>
+            </div>
+        </label>
+    );
+}
+```
+
+</CodeSurfer>
+
+----
+<CodeSurfer theme={draculaTheme}>
+
+```jsx showNumbers title="Enzyme" subtitle="Here, there is a wrapper that makes possible to access any internal detail of a component including state, props, methods etc."
+    import { shallow } from 'enzyme';
+
+    it('should render correctly when has default checked true', () => {
+        const wrapper = shallow(<Toggle {...mockProps} isChecked />);
+
+        expect(wrapper.find('.checkbox').props().checked).toBe(true);
+    });
+
+    it('should accept a onChange that returns the value', () => {
+        const event = {
+            target: { checked: true },
+        };
+        const wrapper = shallow(<Toggle {...mockProps} />);
+
+        wrapper.find('input').simulate('change', event);
+
+        expect(mockProps.onChange).toHaveBeenCalledTimes(1);
+        expect(mockProps.onChange).toBeCalledWith(event);
+    });
+```
+
+</CodeSurfer>
+
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx showNumbers title="React Testing Library" subtitle="In this case, there is a render that provide utility methods to find elements and perform actions against a rendered DOM, then preventing us from accessing to internal details of the component."
+    import { render, screen, fireEvent } from '@testing-library/react';
+
+    it('should be OFF by default', () => {
+        render(<Toggle {...mockProps} />);
+
+        expect(screen.getByRole('checkbox')).toBeChecked();
+    });
+
+    it('should turn ON', () => {
+        render(<Toggle {...mockProps} />);
+
+        const checkbox = screen.getByRole('checkbox');
+
+        expect(checkbox).not.toBeChecked();
+
+        fireEvent.click(checkbox);
+
+        expect(checkbox).toBeChecked();
+        expect(mockProps.onChange).toHaveBeenCalledTimes(1);
+    });
+
+```
+
+</CodeSurfer>
+
+<Notes>
+
+First, we have a few test cases implemented with Enzyme.
+
+In this case, there is a wrapper that makes possible to access any internal detail of a component including state, props, methods etc.
 
 </Notes>
 
