@@ -170,6 +170,32 @@ and more...
 
 ----
 
+# What query method should I use?
+
+----
+### Prioritize *A11y* and *semantic* queries
+
+- **getRole**
+    - `getByRole('button', {name: /buy now/i})`
+- **getByLabelText**
+    - `getByLabelText(/email/i)`
+- **getByText**
+    - `getByText('you have got 10% discount')`
+
+...
+
+----
+### Prioritize *A11y* and *semantic* queries
+
+- **getByAltText**
+    - `getByAltText('old man sitting on a bench')`
+- **getByTitle**
+    - `getByTitle(/welcome/i)`
+
+...
+
+----
+
 import thinking from './images/thinking.png'
 
 ## When should I use getBy or queryBy?
@@ -511,8 +537,7 @@ How would be a test case for ClickCounter component?
 
 ----
 
-> When it comes to fire events, the more we simulate the real user action, the better.
-Having this in mind, **user-event** brings to us an API to help simulating the user interactions as much close to real as possible.
+> **fireEvent** method might be enough for most cases, but to perform more robust interactions, **user-event** may be a great option to help simulating interactions as much close to real user action as possible.
 
 ----
 
