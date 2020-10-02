@@ -23,7 +23,7 @@ export const theme = {
 2. API (Querying, Firing Events, Configuration etc)
 3. Additional packages, extensions etc.
 4. Differences comparing to Enzyme 
-4. Principles
+4. Takeaways
 5. Q & A
 
 </Steps>
@@ -358,6 +358,25 @@ it('should show content in a "tooltip" after a click event', () => {
 </CodeSurfer>
 
 ----
+## within
+----
+
+<CodeSurfer theme={draculaTheme}>
+
+```jsx showNumbers title="Binding query functions to an element creating some sort of wrapper to select elements from"
+    import { render, screen, within } from '@testing-library/react';
+
+    render(<MyComponent />);
+
+    const form = screen.getByTestId('my-form');
+
+    expect(within(form).getByPlaceholderText('Username')).toBeInTheDocument();
+
+```
+
+</CodeSurfer>
+
+----
 
 ## jest-dom
 
@@ -429,7 +448,7 @@ That’s exactly what jest-dom provides, matchers including toBeDisabled, toBeIn
         render(<Summary {...props} />);
 
         screen.debug();
-        expect(screen.getByText(props.title)).toBeDefined();
+        expect(screen.getByText(props.title)).toBeInTheDocument();
     });
 
 ```
@@ -548,9 +567,11 @@ import userEvent from '@testing-library/user-events'
 
 const checkbox = screen.getByRole('checkbox', { name: /checkbox sample/i })
 
+expect(checkbox).not.toBeChecked()
+
 userEvent.dblClick(checkbox)
 
-expect(checkbox).toHaveProperty('checked', false)
+expect(checkbox).not.toBeChecked()
 
 ```
 
@@ -674,7 +695,7 @@ import { render } from './test-utils';
 
 ----
 
-> RTL, by default, takes “data-testid” as the identification attribute for “getByTestId”, but there are times that this attribute name does not fit our app either because it is a legacy code using a different test id throughout all files or just a matter of taste. For these cases, a configuration file can be set as a solution.
+> React Testing Library, by default, takes “data-testid” as the identification attribute for “getByTestId”, but there are times that this attribute name does not fit our app either because it is a legacy code using a different test id throughout all files or just a matter of taste. For these cases, a configuration file can be set as a solution.
 
 > Configs should be placed in jest.config.js file, there you can include setupFilesAfterEnv to have the setup script you need for your project.
 
@@ -714,18 +735,18 @@ to inspect elements on the page suggesting the best queries using React Testing 
 
 ----
 
-> The main concept around React Testing Library is to have tests that resemble how your application is going to function in the real world. So instead of dealing with a component instance and all its implementation details, RTL works with actual DOM nodes as a result of a component being rendered.
+> The main concept around React Testing Library is to have tests that resemble how your application is going to function in the real world. So instead of dealing with a component instance and all its implementation details, React Testing Library works with actual DOM nodes as a result of a component being rendered.
 
 > Basically, your tests will be based on testing the output (DOM rendered and side effects) of component given an input.
 
 ----
-## POV - Enzyme vs React Testing  Library
+## Enzyme vs React Testing Library
 
 On the event of going to a bar:
 	
->- **Enzyme** cares if there is an empty seat, if we are updating our free seat number, if my state.beers is being well set, if component Beer is in our mount/shallow.
+>- **Enzyme** gives room to think about if an array of seats is empty, if we are updating our free seat number, if my state.beers is being well set etc.
 
->- **React Testing Library** wants to know if there is an empty seat, what I will get if I ask for 3 beers, what will be said if I ask more than the stock limit.
+>- **React Testing Library** focus if there is an empty seat in the UI, what I will get if I ask for 3 beers, what will be said if I ask more than the stock limit.
 
 ----
 
@@ -800,7 +821,7 @@ function Toggle({ isChecked, on, off, onChange, theme, ...otherProps }) {
     it('should be OFF by default', () => {
         render(<Toggle {...mockProps} />);
 
-        expect(screen.getByRole('checkbox')).toBeChecked();
+        expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
     it('should turn ON', () => {
@@ -830,12 +851,12 @@ In this case, there is a wrapper that makes possible to access any internal deta
 
 ----
 
-## Principles
+## Takeaways
 
 ----
 
 > - Test the output of a component given an input.
-- Drive your tests towards a11y.
+- Drive your tests towards accessibility (a11y).
 - Forget about implementation details (internal code does not matter).
 - Focus on **What** instead of **How**.
 - The main goal is the CONFIDENCE your tests can give you and how much you will trust them to cover your back.
