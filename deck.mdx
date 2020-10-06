@@ -36,7 +36,10 @@ import logo from './images/rtl.jpg'
 <img src={logo} />
 
 ## What is React Testing  Library?
-> *“The React Testing Library is a very light-weight solution for testing React components.
+
+> Created by Kent C. Dodds, React Testing Library is meant to be
+
+> *“a very light-weight solution for testing React components.
 It provides light utility functions on top of react-dom and react-dom/test-utils, in a way that encourages better testing practices.”*
 <small>
     <Link color='primary' href='https://testing-library.com/docs/react-testing-library/intro'>React Testing Library docs</Link>
@@ -58,13 +61,22 @@ the more confidence we get the application will work as expected.
 
 ----
 
+## Some benefits
+
+- Low learning curve.
+- High support to React new features.
+- Less implementation details.
+- Less brittle tests that break after any change.
+
+----
+
 ## Mindset upon writing a test
 
 ----
 
 > **Let's take a product list as example**:
 If we click to add a product to a wishlist,
-we don’t want to know if *addToWishlist* redux action was dispatched or an internal state variable changed. Instead, 
+we might not want to know if *addToWishlist* redux action was dispatched or an internal state variable changed. Instead, 
 we could check if the star got highlighted and a call, to the endpoint that adds the product to wishlist, was made.
 Our unit tests should be our go-to documentation
 
@@ -538,8 +550,6 @@ How would be a test case for ClickCounter component?
         render(<ClickCounter />);
         
         const clickCounter = screen.getByRole("button", { name: "Clicks: 0" });
-
-        expect(clickCounter).toHaveTextContent("Clicks: 0");
 
         fireEvent.click(clickCounter);
 
